@@ -1,9 +1,8 @@
-# 導入Discord.py模組
-# bot.py
 import discord
 from discord.ext import commands
 import asyncio
-from goo_crawler import crawl_goo_entries  # 匯入爬蟲函式
+from goo_crawler import crawl_word_full # 匯入爬蟲函式
+from Jishon import lookup_word
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -14,32 +13,39 @@ async def on_ready():
     print(f'Logged in as {bot.user}')
 
 @bot.command()
-async def hello(ctx):
-    await ctx.send('Hello!我是你的日文小助手!')
-
-@bot.command()
 async def lookup(ctx, *, word: str):
-    await ctx.send(f"正在查詢『{word}』，請稍候...")
-    await asyncio.sleep(1)  # 避免頻繁請求
+    await ctx.send(f"正在查詢「{word}」，請稍候...")
+    await asyncio.sleep(1)  # 控制節奏避免頻繁請求
+    msg_jisho=""
+    msg_goo=""
 
-    entries = await asyncio.to_thread(crawl_goo_entries, word)
-    if not entries:
-        await ctx.send(f"找不到『{word}』的資料。")
+    # 非同步執行阻塞的爬蟲函式，爬 goo辞書
+    results = await asyncio.to_thread(crawl_word_full, word, 3)  # 只抓前三筆
+
+    # 非同步執行 Jisho API 查詢
+    jp, en= await asyncio.to_thread(lookup_word, word)
+
+    if not results and jp is None:
+        await ctx.send(f"找不到「{word}」的資料。")
         return
 
-    # 只取前三個詞條
-    entries = entries[:3]
+    # 回覆 Jisho API 查詢結果
+    if jp:
+        msg_jisho = f"【Jisho API】日文：{jp}\n英文解釋：{en}\n"
+        #await ctx.send(msg_jisho+"\n")
 
-    # Discord 訊息最大長度約2000字，分段發送
-    for i, entry in enumerate(entries, 1):
-        msg = f"詞條{i}: {entry['title']}\n定義: {entry['definition']}\n"
-        try:
-            await ctx.send(msg)
-        except discord.HTTPException:
-            # 若訊息過長，可拆分或簡化內容
-            truncated_msg = msg[:1900] + "..."
-            await ctx.send(truncated_msg)
 
+    # 回覆 goo 辞書爬蟲結果
+    for i, entry in enumerate(results, 1):
+        title = entry['title'] if entry['title'] else "無標題"
+        definition = entry['definition'] if entry['definition'] else "無定義"
+        msg_goo += f"【goo 辞書】詞條{i}：{title}\n定義：{definition}\n\n"
+        #try:
+            #await ctx.send(msg_goo+"\n")
+        #except discord.HTTPException:
+            #3await ctx.send(msg_goo[:1900] + "..."+"\n")
+    
+    await ctx.send(msg_jisho+"\n"+msg_goo)
 
 
 bot.run('MTMwNzY4MDc5OTgyNjUwOTg3NQ.GhyENQ.hyjaWfwa4eBB2e1R5H4Qr-WgSpBuGkhhtMYksc')
