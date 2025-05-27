@@ -1,3 +1,1 @@
-
-    if jp:
-        msg_jisho = f"【Jisho API】日文：{jp}\n英文解釋：{en}\n"
+f"⚠️ 詞彙「{word_data['japanese']}」已存在學習本中。"
