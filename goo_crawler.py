@@ -61,4 +61,3 @@ def crawl_word_full(word,max_entries):
             })
         max_entries-=1
     return results
-    #print(results)
