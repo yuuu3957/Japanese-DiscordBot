@@ -1,5 +1,5 @@
 import discord
-from add_note import save_word
+import notebook
 
 class AddNoteModal(discord.ui.Modal, title = "新增詞彙"):
     japanese = discord.ui.TextInput(label = "日文")
@@ -28,9 +28,20 @@ class AddNoteModal(discord.ui.Modal, title = "新增詞彙"):
             "status": "未學",
             "notes": self.note.value
         }
-
-        flag = save_word(str(interaction.user.id), word_data)
+        flag = notebook.save_word(str(interaction.user.id), word_data)
         if (flag):
             await interaction.response.send_message(f"✅ 已將詞彙「{word_data['japanese']}」加入你的學習本！")
         else:
             await interaction.response.send_message(f"⚠️ 詞彙「{word_data['japanese']}」已存在學習本中。")
+
+class DeleteNoteModal(discord.ui.Modal, title = "刪除詞彙"):
+    japanese = discord.ui.TextInput(label = "日文")
+
+    async def on_submit(self, interaction: discord.Interaction):
+        flag = notebook.delete_word(str(interaction.user.id), self.japanese)
+        
+        print(self.japanese)
+        if (flag):
+            await interaction.response.send_message(f"✅ 已將詞彙「{self.japanese}」從你的學習本刪除！")
+        else:
+            await interaction.response.send_message(f"⚠️ 詞彙「{self.japanese}」未在學習本中。")

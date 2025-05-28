@@ -7,7 +7,7 @@ import os
 from goo_crawler import crawl_word_full  # 爬蟲函式
 from Jishon import lookup_word  # Jisho API
 from groq_help import start_groq, generate_japanese_lookup, generate_japanese_addnote # Groq
-from add_note import add_or_update_word, load_user_notebook, parse_args_to_dict, add_word_to_notebook
+from notebook import add_or_update_word, load_user_notebook, parse_args_to_dict, add_word_to_notebook
 import ButtonClass
 import ModalClass
 
@@ -48,8 +48,7 @@ async def on_ready():
                     "🔍 **查詢功能**\n"
                     "  輸入 `!lookup <日文字>` 即可查詢該單字的詳細解釋與例句。\n\n"
                     "📝 **學習本功能**\n"
-                    "  使用 `!addword <單字> <中文解釋>` 將單字加入你的學習本。\n\n"
-                    "  使用 `!mynote` 將學習本內容輸出。\n\n"
+                    "  使用 `!notebook` 可使用學習本功能。\n\n"
                     "🧪 **測驗功能**\n"
                     "  輸入 `!quiz` 開始隨機小測驗，幫助複習。\n\n"
                 ),
@@ -108,6 +107,14 @@ async def mynote(ctx):
     view = ButtonClass.NotebookView(notebook, ctx.author.id)
     embed = view.get_page_embed()
     await ctx.send(embed=embed, view=view)
+
+@bot.command()
+async def notebook(ctx):
+    user_id = str(ctx.author.id)
+    view = ButtonClass.NotebookView(user_id)
+    embed = view.get_embed()
+    await ctx.send(embed=embed,view=view)
+    
 
 @app_commands.command(name="addnote", description="新增詞彙到學習本")
 async def addnote(interaction: discord.Interaction):

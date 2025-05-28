@@ -99,8 +99,8 @@ def generate_japanese_addnote(s, model, client):
     try:
         import json
         data = json.loads(json_str)
-        print(data)
+        #print(data)
         return data
     except json.JSONDecodeError as e:
-        print("JSON 解析失敗:", e)
+        #print("JSON 解析失敗:", e)
         return None
