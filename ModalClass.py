@@ -1,5 +1,5 @@
 import discord
-import notebook
+import NoteBook
 
 class AddNoteModal(discord.ui.Modal, title = "新增詞彙"):
     japanese = discord.ui.TextInput(label = "日文")
@@ -28,7 +28,7 @@ class AddNoteModal(discord.ui.Modal, title = "新增詞彙"):
             "status": "未學",
             "notes": self.note.value
         }
-        flag = notebook.save_word(str(interaction.user.id), word_data)
+        flag = NoteBook.save_word(str(interaction.user.id), word_data)
         if (flag):
             await interaction.response.send_message(f"✅ 已將詞彙「{word_data['japanese']}」加入你的學習本！")
         else:
@@ -38,10 +38,57 @@ class DeleteNoteModal(discord.ui.Modal, title = "刪除詞彙"):
     japanese = discord.ui.TextInput(label = "日文")
 
     async def on_submit(self, interaction: discord.Interaction):
-        flag = notebook.delete_word(str(interaction.user.id), self.japanese)
+        flag = NoteBook.delete_word(str(interaction.user.id), self.japanese)
         
         print(self.japanese)
         if (flag):
             await interaction.response.send_message(f"✅ 已將詞彙「{self.japanese}」從你的學習本刪除！")
         else:
             await interaction.response.send_message(f"⚠️ 詞彙「{self.japanese}」未在學習本中。")
+
+class EditModal(discord.ui.Modal):
+    def __init__(self, word, field):
+        super().__init__(title=f"修改「{word}」的 {field} 資料")
+        self.word = word
+        self.field = field
+        self.new_value = discord.ui.TextInput(label=f"請輸入新的 {field}：", style=discord.TextStyle.paragraph)
+        self.add_item(self.new_value)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        user_id = str(interaction.user.id)
+        notebook = NoteBook.load_user_notebook(user_id)
+
+        # 尋找詞彙並修改欄位
+        modified = False
+        if "example" not in self.field:
+            for w in notebook:
+                if w["japanese"] == self.word:
+                    w[self.field] = self.new_value.value
+                    modified = True
+                    break
+        elif "example1" in self.field:
+            self.field = self.field[len("example1 "):]
+            for w in notebook:
+                if w["japanese"] == self.word:
+                    w["examples"][0][self.field] = self.new_value.value
+                    modified = True
+                    break
+        else:
+            self.field = self.field[len("example2 "):]  
+            for w in notebook:
+                if w["japanese"] == self.word:
+                    w["examples"][1][self.field] = self.new_value.value
+                    modified = True
+                    break
+
+        if modified:
+            NoteBook.save_user_notebook(user_id, notebook)
+            await interaction.response.send_message(
+                f"✅ 已成功將「{self.word}」的 {self.field} 更新為：{self.new_value.value}",
+                ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                f"⚠️ 找不到詞彙「{self.word}」，無法更新。",
+                ephemeral=True
+            )

@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands import CommandNotFound
 from discord import app_commands
 import asyncio
 import getpass
@@ -7,7 +8,7 @@ import os
 from goo_crawler import crawl_word_full  # 爬蟲函式
 from Jishon import lookup_word  # Jisho API
 from groq_help import start_groq, generate_japanese_lookup, generate_japanese_addnote # Groq
-from notebook import add_or_update_word, load_user_notebook, parse_args_to_dict, add_word_to_notebook
+from NoteBook import add_or_update_word, load_user_notebook, parse_args_to_dict, add_word_to_notebook
 import ButtonClass
 import ModalClass
 
@@ -97,18 +98,6 @@ async def lookup(ctx, *, word: str):
     )
 
 @bot.command()
-async def mynote(ctx):
-    user_id = str(ctx.author.id)
-    notebook = load_user_notebook(user_id)
-    if not notebook:
-        await ctx.send("你的學習本目前是空的喔！")
-        return
-
-    view = ButtonClass.NotebookView(notebook, ctx.author.id)
-    embed = view.get_page_embed()
-    await ctx.send(embed=embed, view=view)
-
-@bot.command()
 async def notebook(ctx):
     user_id = str(ctx.author.id)
     view = ButtonClass.NotebookView(user_id)
@@ -120,6 +109,14 @@ async def notebook(ctx):
 async def addnote(interaction: discord.Interaction):
     modal = ModalClass.AddNoteModal()
     await interaction.response.send_modal(modal)
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, CommandNotFound):
+        await ctx.send(f"抱歉，指令 `{ctx.invoked_with}` 不存在，請確認指令是否正確。")
+    else:
+        # 其他錯誤可用這裡處理或直接 raise
+        raise error
 
 
 
