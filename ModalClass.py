@@ -26,7 +26,12 @@ class AddNoteModal(discord.ui.Modal, title = "新增詞彙"):
             }
             ],
             "status": "未學",
+            "quiz_results": {
+                "jp_to_ch": {"correct": 0, "wrong": 0},
+                "ch_to_jp": {"correct": 0, "wrong": 0}
+            },
             "notes": self.note.value
+
         }
         flag = NoteBook.save_word(str(interaction.user.id), word_data)
         if (flag):
@@ -40,7 +45,6 @@ class DeleteNoteModal(discord.ui.Modal, title = "刪除詞彙"):
     async def on_submit(self, interaction: discord.Interaction):
         flag = NoteBook.delete_word(str(interaction.user.id), self.japanese)
         
-        print(self.japanese)
         if (flag):
             await interaction.response.send_message(f"✅ 已將詞彙「{self.japanese}」從你的學習本刪除！")
         else:
@@ -60,7 +64,17 @@ class EditModal(discord.ui.Modal):
 
         # 尋找詞彙並修改欄位
         modified = False
-        if "example" not in self.field:
+        if self.field == "status":
+            if self.new_value.value == "未學":
+                for w in notebook:
+                    if w["japanese"] == self.word:
+                        w[self.field] = self.new_value.value
+                        modified = True
+                        w["quiz_results"] = {"jp_to_ch": {"correct":0, "wrong":0}, "ch_to_jp": {"correct":0, "wrong":0}}
+                        break
+
+
+        elif "example" not in self.field:
             for w in notebook:
                 if w["japanese"] == self.word:
                     w[self.field] = self.new_value.value
@@ -92,3 +106,4 @@ class EditModal(discord.ui.Modal):
                 f"⚠️ 找不到詞彙「{self.word}」，無法更新。",
                 ephemeral=True
             )
+    

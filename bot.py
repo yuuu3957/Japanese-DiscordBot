@@ -33,7 +33,6 @@ channel_id = int(set_env("Channel_ID").strip())
 
 @bot.event
 async def on_ready():
-    slash = await bot.tree.sync()
     print(f"{bot.user} Log in")
 
     try:
@@ -90,11 +89,11 @@ async def lookup(ctx, *, word: str):
     groq_result = generate_japanese_lookup(word, model, client)
     groq_msg = groq_result or "無資料"
 
-    view = ButtonClass.LookupView(word, jisho_msg, goo_msg, groq_msg)
+    lookup_view = ButtonClass.LookupView(word, jisho_msg, goo_msg, groq_msg)
     await ctx.send(
-        "🔎 **查詢完畢！**\n"
-        "請點選下方按鈕查看不同資料來源的查詢結果。",
-        view=view
+        "🔎 **查詢完畢！**\n",
+        embed = lookup_view.get_embed(),
+        view=lookup_view
     )
 
 @bot.command()
@@ -105,10 +104,13 @@ async def notebook(ctx):
     await ctx.send(embed=embed,view=view)
     
 
-@app_commands.command(name="addnote", description="新增詞彙到學習本")
-async def addnote(interaction: discord.Interaction):
-    modal = ModalClass.AddNoteModal()
-    await interaction.response.send_modal(modal)
+@bot.command()
+async def quiz(ctx):
+    user_id = str(ctx.author.id)
+    view = ButtonClass.QuizView(user_id)
+    embed = view.get_embed()
+    await ctx.send(embed=embed,view=view)
+
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -119,7 +121,5 @@ async def on_command_error(ctx, error):
         raise error
 
 
-
-bot.tree.add_command(addnote)
 bot_key = set_env("DC_Robot_KEY")
 bot.run(bot_key)

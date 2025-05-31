@@ -87,6 +87,7 @@ class FieldSelect(discord.ui.Select):
             discord.SelectOption(label="例句2-日文", value="example2 jp_sentence"),
             discord.SelectOption(label="例句2-假名", value="example2 jp_reading"),
             discord.SelectOption(label="筆記", value="note"),
+            discord.SelectOption(label="狀態(僅可改為未學)", value="status")
         ]
 
         super().__init__(placeholder="選擇要修改的欄位", options=options)

@@ -3,8 +3,9 @@ import ModalClass
 import NoteBook
 import groq_help
 import EditNoteBook
+import quiz
 
-Notebook_Page_Size = 5
+Notebook_Page_Size = 3
 model, client = groq_help.start_groq()
 
 
@@ -16,25 +17,40 @@ class LookupView(discord.ui.View):
         self.goo_msg = goo_msg
         self.groq_msg = groq_msg
 
+    def get_embed(self):
+        embed = discord.Embed(
+            title=f"🔎 **查詢完畢！**",
+            description=(
+                    "**功能說明：**\n\n"
+                    "  點擊 `Jisho 查詢` 獲得日英對照\n\n"
+                    "  點擊 `Goo 辞書` 獲得日日字典查詢結果。\n\n"
+                    "  點擊 `Groq AI 回答` 獲得AI回應(含中文和例句)。\n\n"
+                    "  點擊 `加入學習本` 將GroqAI回答加入學習本\n\n"
+                ),
+            color=0x686FFC
+        )
+        return embed
+
     @discord.ui.button(label="Jisho 查詢", style=discord.ButtonStyle.primary)
     async def jisho_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"【Jisho API】查詢結果：\n{self.jisho_msg}", ephemeral=False)
+        await interaction.response.send_message(f"【Jisho API】查詢結果：\n{self.jisho_msg}", ephemeral=True)
 
     @discord.ui.button(label="Goo 辞書", style=discord.ButtonStyle.primary)
     async def goo_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"【goo 辞書】查詢結果：\n{self.goo_msg}", ephemeral=False)
+        await interaction.response.send_message(f"【goo 辞書】查詢結果：\n{self.goo_msg}", ephemeral=True)
 
     @discord.ui.button(label="Groq AI 回答", style=discord.ButtonStyle.primary)
     async def groq_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"【Groq AI】回答：\n{self.groq_msg}", ephemeral=False)
+        await interaction.response.send_message(f"【Groq AI】回答：\n{self.groq_msg}", ephemeral=True)
     
     @discord.ui.button(label="加入學習本", style=discord.ButtonStyle.primary)
     async def add_note_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = str(interaction.user.id)
         word_data = groq_help.generate_japanese_addnote(self.groq_msg, model, client)
-        print (word_data)
-        word_data["japanese"] = self.word
         word_data["status"] = "未學"
+        jp_to_ch = {"correct": 0, "wrong": 0}
+        ch_to_jp = {"correct": 0, "wrong": 0}
+        word_data["quiz_result"] = {"jp_to_ch" : jp_to_ch, "ch_to_jp" : ch_to_jp}
         note = ""
         is_new = NoteBook.add_or_update_word(user_id, word_data, note)
         if is_new:
@@ -59,7 +75,12 @@ class ShowView(discord.ui.View):
         )
         for idx, word in enumerate(self.notebook[start:end], start=1+start):
             name = f"{idx}. {word['japanese']} ({word.get('reading', '')})"
-            value = f"中文解釋：{word.get('chinese', '')}\n狀態：{word.get('status', '')}\n"
+            if word["status"] == "未學":
+                status = "🔴"
+            else :
+                status = "🟢"
+
+            value = f"中文解釋：{word.get('chinese', '')}\n狀態: {status}\n"
             examples = word.get('examples', [])
             for i, ex in enumerate(examples[:2], 1):
                 jp_sentence = ex.get('jp_sentence', '')
@@ -152,38 +173,28 @@ class NotebookView(discord.ui.View):
         )
 
 class QuizView(discord.ui.View):
-    def __init__(self, word, jisho_msg, goo_msg, groq_msg):
-        super().__init__()
-        self.word = word
-        self.jisho_msg = jisho_msg
-        self.goo_msg = goo_msg
-        self.groq_msg = groq_msg
+    def __init__(self,user_id):
+        super().__init__(timeout=120)
+        self.user_id = user_id
 
-    @discord.ui.button(label="Jisho 查詢", style=discord.ButtonStyle.primary)
-    async def jisho_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"【Jisho API】查詢結果：\n{self.jisho_msg}", ephemeral=False)
+    def get_embed(self):
+        embed = discord.Embed(
+            title=f"📝 **測驗功能**",
+            description=(
+                    "請選擇``日譯中`或`中譯日`\n\n"
+                ),
+            color=0x686FFC
+        )
+        return embed
 
-    @discord.ui.button(label="Goo 辞書", style=discord.ButtonStyle.primary)
-    async def goo_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"【goo 辞書】查詢結果：\n{self.goo_msg}", ephemeral=False)
+    @discord.ui.button(label="日譯中", style=discord.ButtonStyle.success)
+    async def jp_to_ch_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+            modal = quiz.QuizCountModal("日譯中")
+            await interaction.response.send_modal(modal)
 
-    @discord.ui.button(label="Groq AI 回答", style=discord.ButtonStyle.primary)
-    async def groq_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"【Groq AI】回答：\n{self.groq_msg}", ephemeral=False)
-    
-    @discord.ui.button(label="加入學習本", style=discord.ButtonStyle.primary)
-    async def add_note_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        user_id = str(interaction.user.id)
-        word_data = groq_help.generate_japanese_addnote(self.groq_msg, model, client)
-        print (word_data)
-        word_data["japanese"] = self.word
-        word_data["status"] = "未學"
-        note = ""
-        is_new = NoteBook.add_or_update_word(user_id, word_data, note)
-        if is_new:
-            await interaction.response.send_message(f"✅ 已新增「{self.word}」並加入筆記。")
-        else:
-            await interaction.response.send_message(f"✏️ 已更新「{self.word}」的筆記。")
-    
+    @discord.ui.button(label="中譯日", style=discord.ButtonStyle.danger)
+    async def ch_to_jp_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+            modal = quiz.QuizCountModal("中譯日")
+            await interaction.response.send_modal(modal)
 
 
