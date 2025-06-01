@@ -31,10 +31,11 @@ def add_or_update_word(user_id, word_data, note=""):
     save_user_notebook(user_id, notebook)
     return True  # 代表是新增
 
+"""
 def parse_args_to_dict(args_str):
-    """
+
     將類似 'japanese=猫 chinese=貓 reading=ねこ' 的字串轉成字典
-    """
+
     args = shlex.split(args_str)  # 支援引號包含有空白
     data = {}
     for arg in args:
@@ -42,6 +43,7 @@ def parse_args_to_dict(args_str):
             key, value = arg.split("=", 1)
             data[key] = value
     return data
+"""
 
 def add_word_to_notebook(user_id, word_data):
     notebook = load_user_notebook(user_id)

@@ -1,16 +1,16 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound
-from discord import app_commands
 import asyncio
 import getpass
 import os
-from goo_crawler import crawl_word_full  # 爬蟲函式
-from Jishon import lookup_word  # Jisho API
-from groq_help import start_groq, generate_japanese_lookup, generate_japanese_addnote # Groq
-from NoteBook import add_or_update_word, load_user_notebook, parse_args_to_dict, add_word_to_notebook
-import ButtonClass
-import ModalClass
+from groq_help import start_groq
+from lookup_code.goo_crawler import crawl_word_full  # 爬蟲函式
+from lookup_code.Jishon import lookup_word  # Jisho API
+from lookup_code.lookup_groq import generate_japanese_lookup
+from lookup_code.ui.lookup_base_ui import LookupView
+from notebook_code.ui.notebook_base_ui import NotebookView
+from quiz_code.ui.quiz_base_ui import QuizView
 
 
 def set_env(var: str, val: str = None):
@@ -89,7 +89,7 @@ async def lookup(ctx, *, word: str):
     groq_result = generate_japanese_lookup(word, model, client)
     groq_msg = groq_result or "無資料"
 
-    lookup_view = ButtonClass.LookupView(word, jisho_msg, goo_msg, groq_msg)
+    lookup_view = LookupView(word, jisho_msg, goo_msg, groq_msg)
     await ctx.send(
         "🔎 **查詢完畢！**\n",
         embed = lookup_view.get_embed(),
@@ -99,7 +99,7 @@ async def lookup(ctx, *, word: str):
 @bot.command()
 async def notebook(ctx):
     user_id = str(ctx.author.id)
-    view = ButtonClass.NotebookView(user_id)
+    view = NotebookView(user_id)
     embed = view.get_embed()
     await ctx.send(embed=embed,view=view)
     
@@ -107,7 +107,7 @@ async def notebook(ctx):
 @bot.command()
 async def quiz(ctx):
     user_id = str(ctx.author.id)
-    view = ButtonClass.QuizView(user_id)
+    view = QuizView(user_id)
     embed = view.get_embed()
     await ctx.send(embed=embed,view=view)
 

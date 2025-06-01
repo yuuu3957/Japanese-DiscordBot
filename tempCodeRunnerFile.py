@@ -1,2 +1,2 @@
 
-bot.run(bot_key)
+from lookup_code.lookup_groq import generate_japanese_lookup

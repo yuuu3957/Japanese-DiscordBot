@@ -51,8 +51,8 @@ class LookupView(discord.ui.View):
         jp_to_ch = {"correct": 0, "wrong": 0}
         ch_to_jp = {"correct": 0, "wrong": 0}
         word_data["quiz_result"] = {"jp_to_ch" : jp_to_ch, "ch_to_jp" : ch_to_jp}
-        note = ""
-        is_new = NoteBook.add_or_update_word(user_id, word_data, note)
+        word_data["notes"] = ""
+        is_new = NoteBook.add_word_to_notebook(user_id, word_data)
         if is_new:
             await interaction.response.send_message(f"✅ 已新增「{self.word}」並加入筆記。")
         else:
