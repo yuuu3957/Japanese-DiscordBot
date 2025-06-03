@@ -8,6 +8,7 @@ from groq_help import start_groq
 from lookup_code.goo_crawler import crawl_word_full  # 爬蟲函式
 from lookup_code.Jishon import lookup_word  # Jisho API
 from lookup_code.lookup_groq import generate_japanese_lookup
+from lookup_code.lookup_base import lookup_word_full
 from lookup_code.ui.lookup_base_ui import LookupView
 from notebook_code.ui.notebook_base_ui import NotebookView
 from quiz_code.ui.quiz_base_ui import QuizView
@@ -49,7 +50,7 @@ async def on_ready():
                     "  輸入 `!lookup <日文字>` 即可查詢該單字的詳細解釋與例句。\n\n"
                     "📝 **學習本功能**\n"
                     "  使用 `!notebook` 可使用學習本功能。\n\n"
-                    "🧪 **測驗功能**\n"
+                    "🎯 **測驗功能**\n"
                     "  輸入 `!quiz` 開始隨機小測驗，幫助複習。\n\n"
                 ),
                 color=0x57A2DE
@@ -68,30 +69,10 @@ async def lookup(ctx, *, word: str):
     await ctx.send(f"正在查詢「{word}」，請稍候...")
     await asyncio.sleep(1)
 
-    # 非同步執行阻塞的爬蟲函式，爬 goo辞書
-    results = await asyncio.to_thread(crawl_word_full, word, 3)
+    jisho_result, goo_result, groq_result = await lookup_word_full(word, model, client)
 
-    # 非同步執行 Jisho API 查詢
-    jp, en = await asyncio.to_thread(lookup_word, word)
-
-    # 組訊息
-    if jp:
-        jisho_msg = f"日文：{jp}\n英文解釋：{en}"
-    else:
-        jisho_msg = "無資料"
-
-    goo_msg = ""
-    for i, entry in enumerate(results, 1):
-        title = entry['title'] or "無標題"
-        definition = entry['definition'] or "無定義"
-        goo_msg += f"詞條{i}：{title}\n定義：{definition}\n"
-
-    groq_result = generate_japanese_lookup(word, model, client)
-    groq_msg = groq_result or "無資料"
-
-    lookup_view = LookupView(word, jisho_msg, goo_msg, groq_msg)
+    lookup_view = LookupView(word, jisho_result, goo_result, groq_result)
     await ctx.send(
-        "🔎 **查詢完畢！**\n",
         embed = lookup_view.get_embed(),
         view=lookup_view
     )
