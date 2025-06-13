@@ -53,7 +53,7 @@ class LookupView(discord.ui.View):
         embed = discord.Embed(title="【Goo 辞書】 查詢結果", color=0x686FFC)
         if not self.goo_result :
             embed = discord.Embed(
-            title=f"【Jisho API】查詢結果",
+            title=f"【Goo 辞書】查詢結果",
             description=(
                     "無資料"
                 ),

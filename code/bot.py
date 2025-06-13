@@ -6,7 +6,7 @@ import getpass
 import os
 from groq_help import start_groq
 from lookup_code.goo_crawler import crawl_word_full  # 爬蟲函式
-from lookup_code.Jishon import lookup_word  # Jisho API
+from lookup_code.Jisho import lookup_word  # Jisho API
 from lookup_code.lookup_groq import generate_japanese_lookup
 from lookup_code.lookup_base import lookup_word_full
 from lookup_code.ui.lookup_base_ui import LookupView

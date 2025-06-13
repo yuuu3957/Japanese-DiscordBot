@@ -1,7 +1,7 @@
 
 import asyncio
 from lookup_code.goo_crawler import crawl_word_full  # 爬蟲函式
-from lookup_code.Jishon import lookup_word  # Jisho API
+from lookup_code.Jisho import lookup_word  # Jisho API
 from lookup_code.lookup_groq import generate_japanese_lookup
 
 
